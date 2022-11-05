@@ -1,6 +1,5 @@
 use crate::Storage;
-use crate::error::Error;
-use crate::error::Result;
+use anyhow::Result;
 
 // MiddlewareCaching
 struct MiddleWareCaching<T> {
@@ -26,20 +25,13 @@ impl<'a, T: serde::Deserialize<'a> + serde::Serialize> MiddleWareCaching<T> {
         if self.cache.is_empty() {
             return self.storage.read();
         }
-        let res = serde_json::from_slice(Box::leak(Box::new(self.cache.clone())));
-        match res {
-            Ok(o) => {
-                Ok(o)
-            }
-            Err(e) => {
-                Err(Error::from_source(Box::new(e)))
-            }
-        }
+        let res = serde_json::from_slice(Box::leak(Box::new(self.cache.clone())))?;
+        Ok(res)
     }
 
     /// Write data to MiddlewareCaching cache.
     fn write(&mut self, any: T) -> Result<usize> {
-        let json = serde_json::to_string(&any).map_err(|e| Error::from_source(Box::new(e)))?;
+        let json = serde_json::to_string(&any)?;
         self.cache = json.into_bytes();
         self.count += 1;
         if self.count > self.size {

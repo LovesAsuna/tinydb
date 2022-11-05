@@ -2,8 +2,7 @@ use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::{ErrorKind, Read, Seek, Write};
 use std::io::SeekFrom::Start;
-use crate::error::Error;
-use crate::Result;
+use anyhow::Result;
 
 // Storage an interface of Storage & Middleware.
 // Should implement the method of Read | Write | Close.
@@ -42,33 +41,19 @@ impl<'a, T: serde::Deserialize<'a> + serde::Serialize + Default> Storage<T> for 
     fn read(&mut self) -> Result<T> {
         let mut str = String::new();
         self.handle.seek(Start(0)).unwrap();
-        self.handle.read_to_string(&mut str).map_err(|e| Error::from_source(Box::new(e)))?;
+        self.handle.read_to_string(&mut str)?;
         if str.is_empty() {
             return Ok(T::default());
         }
-        let res = serde_json::from_str(Box::leak(Box::new(str)));
-        match res {
-            Ok(o) => {
-                Ok(o)
-            }
-            Err(e) => {
-                Err(Error::from_source(Box::new(e)))
-            }
-        }
+        let res = serde_json::from_str(Box::leak(Box::new(str)))?;
+        Ok(res)
     }
 
     fn write(&mut self, any: T) -> Result<usize> {
-        let json = serde_json::to_string(&any).map_err(|e| Error::from_source(Box::new(e)))?;
+        let json = serde_json::to_string(&any)?;
         self.handle.seek(Start(0)).unwrap();
-        let res = self.handle.write(json.as_bytes());
-        match res {
-            Ok(o) => {
-                Ok(o)
-            }
-            Err(e) => {
-                Err(Error::from_source(Box::new(e)))
-            }
-        }
+        let res = self.handle.write(json.as_bytes())?;
+        Ok(res)
     }
 
     fn close(self) {}
@@ -89,21 +74,14 @@ impl MemoryStorage {
 impl<'a, T: serde::Deserialize<'a> + serde::Serialize> Storage<T> for MemoryStorage {
     fn read(&mut self) -> Result<T> {
         if self.memory.is_empty() {
-            return Err(Error::from_source(Box::new(io::Error::from(ErrorKind::UnexpectedEof))));
+            return Err(anyhow::Error::from(io::Error::from(ErrorKind::UnexpectedEof)));
         }
-        let res = serde_json::from_slice(Box::leak(Box::new(self.memory.clone())));
-        match res {
-            Ok(o) => {
-                Ok(o)
-            }
-            Err(e) => {
-                Err(Error::from_source(Box::new(e)))
-            }
-        }
+        let res = serde_json::from_slice(Box::leak(Box::new(self.memory.clone())))?;
+        Ok(res)
     }
 
     fn write(&mut self, any: T) -> Result<usize> {
-        let s = serde_json::to_string(&any).map_err(|e| Error::from_source(Box::new(e)))?;
+        let s = serde_json::to_string(&any)?;
         self.memory = s.into_bytes();
         Ok(self.memory.len())
     }

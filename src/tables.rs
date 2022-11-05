@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use crate::Database;
-use crate::error::Error;
-use crate::error::Result;
+use anyhow::Result;
 
 // Table the table of the database.
 pub struct Table<'a, T> {

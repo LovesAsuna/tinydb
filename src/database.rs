@@ -1,10 +1,8 @@
 use std::collections::HashMap;
-use std::error::Error;
-use std::io;
 use std::io::ErrorKind;
 use std::sync::Mutex;
 use crate::storages;
-use crate::Result;
+use anyhow::Result;
 
 // Database the tiny_db database.
 pub struct Database<T> {

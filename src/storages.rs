@@ -40,7 +40,7 @@ impl StorageJSON {
 impl<'a, T: serde::Deserialize<'a> + serde::Serialize + Default> Storage<T> for StorageJSON {
     fn read(&mut self) -> Result<T> {
         let mut str = String::new();
-        self.handle.seek(Start(0)).unwrap();
+        self.handle.seek(Start(0))?;
         self.handle.read_to_string(&mut str)?;
         if str.is_empty() {
             return Ok(T::default());

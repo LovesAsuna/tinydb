@@ -5,10 +5,10 @@ use anyhow::Result;
 // Table the table of the database.
 pub struct Table<'a, T> {
     name: String,
-    database: &'a Database<HashMap<String, Vec<T>>>,
+    database: &'a Database<T>,
 }
 
-impl<T> Database<HashMap<String, Vec<T>>> {
+impl<T> Database<T> {
     /// get a specific table from the database.
     pub fn get_table(&self, name: String) -> Table<T> {
         Table {
@@ -20,7 +20,7 @@ impl<T> Database<HashMap<String, Vec<T>>> {
     /// drop a specific table from the database.
     pub fn drop_table(&self, name: String) -> Result<()> {
         let mut storage = self.storage.lock().unwrap();
-        let mut data: HashMap<String, Vec<T>> = storage.read()?;
+        let mut data = storage.read()?;
         data.remove(&name);
         storage.write(data).map(|_| ())
     }
@@ -31,7 +31,7 @@ impl<T: Clone> Table<'_, T> {
     pub fn insert(&self, items: &[T]) -> Result<usize> {
         let mut storage = self.database.storage.lock().unwrap();
         let mut data = storage.read()?;
-        let mut slot = data.entry(self.name.clone()).or_default();
+        let slot = data.entry(self.name.clone()).or_default();
         slot.append(&mut items.to_vec());
         let len = slot.len();
         storage.write(data).map(|_| len)
@@ -44,7 +44,7 @@ impl<T: Clone> Table<'_, T> {
         if !data.contains_key(&self.name) {
             return Ok(Vec::new());
         }
-        let mut slot = data.remove(&self.name).unwrap();
+        let slot = data.remove(&self.name).unwrap();
         let mut out = Vec::new();
         let mut left = Vec::new();
         for item in slot {
@@ -65,7 +65,7 @@ impl<T: Clone> Table<'_, T> {
         if !data.contains_key(&self.name) {
             return Ok(());
         }
-        let mut slot = data.remove(&self.name).unwrap();
+        let slot = data.remove(&self.name).unwrap();
         let mut out = Vec::new();
         for mut item in slot {
             if condition(&item) {
@@ -84,7 +84,7 @@ impl<T: Clone> Table<'_, T> {
         if !data.contains_key(&self.name) {
             return Ok(Vec::new());
         }
-        let mut slot = data.remove(&self.name).unwrap();
+        let slot = data.remove(&self.name).unwrap();
         let mut out = Vec::new();
         for item in slot {
             if condition(&item) {

@@ -1,13 +1,15 @@
-mod memory;
+use anyhow::Result;
 
 use crate::model::KVPair;
 use crate::model::value::Value;
 
+pub(crate) mod memory;
+
 pub trait Storage {
-    fn get(&self, table: &str, key: &str) -> anyhow::Result<Option<Value>>;
-    fn set(&self, table: &str, key: String, value: Value) -> anyhow::Result<Option<Value>>;
-    fn contains(&self, table: &str, key: &str) -> anyhow::Result<bool>;
-    fn del(&self, table: &str, key: &str) -> anyhow::Result<Option<Value>>;
-    fn get_all(&self, table: &str) -> anyhow::Result<Vec<KVPair>>;
-    fn get_iter(&self, table: &str) -> anyhow::Result<Box<dyn Iterator<Item = KVPair>>>;
+    fn get(&self, key: &str) -> Result<Option<Value>>;
+    fn set(&mut self, key: &str, value: Value) -> Result<Option<Value>>;
+    fn contains(&self, key: &str) -> Result<bool>;
+    fn del(&mut self, key: &str) -> Result<Option<Value>>;
+    fn get_all(&self) -> Result<Vec<KVPair>>;
+    fn get_iter(&self) -> Result<Box<dyn Iterator<Item=KVPair>>>;
 }

@@ -19,4 +19,9 @@ impl Database<MemTable> for MemoryDatabase {
         let table = entry.or_insert(Arc::new(RefCell::new(MemTable::new(name.to_owned()))));
         Ok(Arc::clone(table))
     }
+
+    fn drop_table(&mut self, name: &str) -> anyhow::Result<()> {
+        self.inner.remove(name);
+        Ok(())
+    }
 }
